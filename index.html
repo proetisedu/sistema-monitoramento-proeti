@@ -36,8 +36,17 @@
 
 <div id="tela_login">
     <h2 style="color: var(--primary)">PROETI - ES</h2>
-    <input type="password" id="codigo_acesso" placeholder="Código do Município" style="text-align: center; font-size: 18px;">
-    <button class="btn btn-save" onclick="realizarLogin()">Entrar</button>
+    <div id="etapa_1">
+        <input type="password" id="codigo_acesso" placeholder="Token do Município" style="text-align: center; font-size: 18px;">
+        <button class="btn btn-save" onclick="verificarToken()">Validar Token</button>
+    </div>
+    
+    <div id="etapa_2" class="hidden" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+        <label id="label_municipio" style="margin-bottom: 15px; color: var(--dark); font-size: 14px;"></label>
+        <label>Escolha o Edital:</label>
+        <select id="selecao_edital" style="font-size: 16px; margin-bottom: 10px;"></select>
+        <button class="btn btn-save" onclick="finalizarLogin()">Acessar Sistema</button>
+    </div>
 </div>
 
 <div id="sistema_principal" class="container">
@@ -92,208 +101,120 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMQRx_hoEZ_fxibVJk9T5PaeBeFU9E9Su77FdeFD-x6U8eBEFYzntVcKDHUxNZRC09/exec";
     let municipioLogado = null; let listaDespesas = []; const ordemMeses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-    // 
+    // TABELA DE TOKENS POR MUNICÍPIO (ELIMINADO TOKEN POR EDITAL)
+    const tokensMunicipios = [
+        { nome: "Afonso Claudio", codigo: "AFO-26" },
+        { nome: "Águia Branca", codigo: "AGU-26" },
+        { nome: "Alegre", codigo: "ALE-26" },
+        { nome: "Alfredo Chaves", codigo: "ALF-26" },
+        { nome: "Alto Rio Novo", codigo: "ARN-26" },
+        { nome: "Anchieta", codigo: "ANC-26" },
+        { nome: "Aracruz", codigo: "ARA-26" },
+        { nome: "Atílio Vivacqua", codigo: "ATI-26" },
+        { nome: "Baixo Guandu", codigo: "BAI-26" },
+        { nome: "Barra de São Francisco", codigo: "BSF-26" },
+        { nome: "Boa Esperança", codigo: "BOA-26" },
+        { nome: "Bom Jesus do Norte", codigo: "BJN-26" },
+        { nome: "Cachoeiro de Itapemirim", codigo: "CAC-26" },
+        { nome: "Cariacica", codigo: "CAR-26" },
+        { nome: "Colatina", codigo: "COL-26" },
+        { nome: "Conceição da Barra", codigo: "CBA-26" },
+        { nome: "Conceição do Castelo", codigo: "CCA-26" },
+        { nome: "Domingos Martins", codigo: "DOM-26" },
+        { nome: "Dores do Rio Preto", codigo: "DRP-26" },
+        { nome: "Ecoporanga", codigo: "ECO-26" },
+        { nome: "Fundão", codigo: "FUN-26" },
+        { nome: "Guaçuí", codigo: "GUA-26" },
+        { nome: "Guarapari", codigo: "GUA-27" },
+        { nome: "Ibatiba", codigo: "IBA-26" },
+        { nome: "Ibiraçu", codigo: "IBI-26" },
+        { nome: "Ibitirama", codigo: "IBI-27" },
+        { nome: "Iconha", codigo: "ICO-26" },
+        { nome: "Irupi", codigo: "IRU-26" },
+        { nome: "Itaguaçu", codigo: "ITA-26" },
+        { nome: "Itapemirim", codigo: "ITA-27" },
+        { nome: "Itarana", codigo: "ITA-28" },
+        { nome: "Iuna", codigo: "IUN-26" },
+        { nome: "Jaguaré", codigo: "JAG-26" },
+        { nome: "Jerônimo Monteiro", codigo: "JER-26" },
+        { nome: "João Neiva", codigo: "JOA-26" },
+        { nome: "Laranja da Terra", codigo: "LAR-26" },
+        { nome: "Linhares", codigo: "LIN-26" },
+        { nome: "Mantenópolis", codigo: "MAN-26" },
+        { nome: "Marataizes", codigo: "MAR-26" },
+        { nome: "Marechal Floriano", codigo: "MFL-26" },
+        { nome: "Marilândia", codigo: "MAR-27" },
+        { nome: "Mimoso do Sul", codigo: "MIM-26" },
+        { nome: "Montanha", codigo: "MON-26" },
+        { nome: "Muniz freire", codigo: "MUN-26" },
+        { nome: "Muqui", codigo: "MUQ-26" },
+        { nome: "Nova Venécia", codigo: "NVN-26" },
+        { nome: "Pancas", codigo: "PAN-26" },
+        { nome: "Pedro Canário", codigo: "PCA-26" },
+        { nome: "Pinheiros", codigo: "PIN-26" },
+        { nome: "Piuma", codigo: "PIU-26" },
+        { nome: "Rio Novo do Sul", codigo: "RNS-26" },
+        { nome: "Santa Leopoldina", codigo: "SLE-26" },
+        { nome: "Santa Maria de Jetibá", codigo: "SMJ-26" },
+        { nome: "Santa Teresa", codigo: "STE-26" },
+        { nome: "São Domingos do Norte", codigo: "SDN-26" },
+        { nome: "São Gabriel da Palha", codigo: "SGP-26" },
+        { nome: "São José do Calçado", codigo: "SJC-26" },
+        { nome: "São Mateus", codigo: "SMA-26" },
+        { nome: "São Roque do Canaã", codigo: "SRC-26" },
+        { nome: "Serra", codigo: "SER-26" },
+        { nome: "Vargem Alta", codigo: "VAL-26" },
+        { nome: "Viana", codigo: "VIA-26" },
+        { nome: "Vila Pavão", codigo: "VPA-26" },
+        { nome: "Vila Valério", codigo: "VVA-26" },
+        { nome: "Vila Velha", codigo: "VVE-26" }
+    ];
 
-    function gerarPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l', 'mm', 'a4'); // Orientação paisagem para caber todas as colunas
-        
-        // Cabeçalho Institucional
-        doc.setFontSize(20);
-        doc.setTextColor(0, 86, 179);
-        doc.text("PROETI - ES | Relatório de Monitoramento Mensal", 148, 15, { align: 'center' });
-        
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Município: ${document.getElementById('m_municipio').value}`, 14, 30);
-        doc.text(`Edital: ${document.getElementById('m_edital').value}`, 14, 37);
-        doc.text(`Mês de Referência: ${document.getElementById('m_mes').value}`, 14, 44);
-
-        // Resumo Financeiro
-        doc.setFontSize(14);
-        doc.text("Resumo Financeiro", 14, 55);
-        doc.setFontSize(10);
-        doc.rect(14, 58, 267, 15); // Borda para o resumo
-        doc.text(`Saldo Anterior: ${document.getElementById('s_anterior').value}`, 16, 64);
-        doc.text(`Repasses: ${document.getElementById('s_repasses').value}`, 80, 64);
-        doc.text(`Rendimentos: ${document.getElementById('s_rendimentos').value}`, 150, 64);
-        doc.text(`Saldo Atual: ${document.getElementById('s_atual').value}`, 220, 64);
-
-        // Tabela de Despesas (Todos os campos)
-        const columns = ["Fornecedor", "CNPJ", "Tipo Doc", "NF Vinc", "Nº Doc", "Data Doc", "Natureza", "OB", "Data Pgto", "Valor"];
-        const data = listaDespesas.map(d => [d.forn, d.cnpj, d.tipo_doc, d.nf_vinc, d.num_doc, d.data_doc, d.natureza, d.ob, d.data_pgto, d.valor]);
-
-        doc.autoTable({
-            startY: 78,
-            head: [columns],
-            body: data,
-            theme: 'striped',
-            headStyles: { fillColor: [0, 86, 179] },
-            styles: { fontSize: 8, cellPadding: 2 }
-        });
-
-        // Rodapé
-        const pageCount = doc.internal.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.text(`Gerado em: ${new Date().toLocaleString()} - Sistema de Monitoramento PROETI ES`, 14, 200);
-
-        doc.save(`Monitoramento_${document.getElementById('m_municipio').value}_${document.getElementById('m_mes').value}.pdf`);
-    }
-
-    function prepararEnvio() {
-        const mes = document.getElementById('m_mes').value;
-        if(!mes) return alert("Selecione o mês!");
-        
-        gerarPDF(); // Gera o PDF antes do envio
-
-        const payload = { 
-            edital: document.getElementById('m_edital').value, 
-            municipio: municipioLogado.municipio, 
-            mes: mes, 
-            totais: { anterior: document.getElementById('s_anterior').value, repasses: document.getElementById('s_repasses').value, rendimentos: document.getElementById('s_rendimentos').value, atual: document.getElementById('s_atual').value }, 
-            itens: listaDespesas 
-        };
-        
-        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-        .then(() => { alert("Enviado com sucesso!"); location.reload(); })
-        .catch(err => { console.error(err); alert("Erro ao enviar."); });
-    }
-
-    // --- Funções de suporte ---
-    document.getElementById('f_cnpj_fav').addEventListener('input', function (e) {
-        let v = e.target.value.replace(/\D/g, "");
-        v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2");
-        e.target.value = v.substring(0, 18);
-    });
-
-    document.querySelectorAll('.moeda').forEach(input => { input.addEventListener('input', e => { let v = e.target.value.replace(/\D/g,''); v = (v/100).toFixed(2).replace(".",",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); e.target.value = "R$ " + v; validarLogica(); atualizarPainelControle(); }); });
-
+    // BANCO DE DADOS DE RELAÇÃO MUNICÍPIO x EDITAL
     const bancoUsuarios = [
-    // 2021
-    { edital: "001/2021", municipio: "AGUIA BRANCA", codigo: "AGU2021" },
-    { edital: "001/2021", municipio: "ANCHIETA", codigo: "ANC2021" },
-    { edital: "001/2021", municipio: "ARACRUZ", codigo: "ARA2021" },
-    { edital: "001/2021", municipio: "BAIXO GUANDU", codigo: "BAI2021" },
-    { edital: "001/2021", municipio: "BARRA DE SAO FRANCISCO", codigo: "BSF2021" },
-    { edital: "001/2021", municipio: "CACHOEIRO DE ITAPEMIRIM", codigo: "CAC2021" },
-    { edital: "001/2021", municipio: "CARIACICA", codigo: "CAR2021" },
-    { edital: "001/2021", municipio: "COLATINA", codigo: "COL2021" },
-    { edital: "001/2021", municipio: "CONCEICAO DA BARRA", codigo: "CDB2021" },
-    { edital: "001/2021", municipio: "DOMINGOS MARTINS", codigo: "DOM2021" },
-    { edital: "001/2021", municipio: "ECOPORANGA", codigo: "ECO2021" },
-    { edital: "001/2021", municipio: "GUACUI", codigo: "GUA2021" },
-    { edital: "001/2021", municipio: "IBATIBA", codigo: "IBA2021" },
-    { edital: "001/2021", municipio: "IBIRACU", codigo: "IBI2021" },
-    { edital: "001/2021", municipio: "ICONHA", codigo: "ICO2021" },
-    { edital: "001/2021", municipio: "ITAPEMIRIM", codigo: "ITA2021" },
-    { edital: "001/2021", municipio: "ITARANA", codigo: "ITR2021" },
-    { edital: "001/2021", municipio: "JAGUARE", codigo: "JAG2021" },
-    { edital: "001/2021", municipio: "LARANJA DA TERRA", codigo: "LAT2021" },
-    { edital: "001/2021", municipio: "LINHARES", codigo: "LIN2021" },
-    { edital: "001/2021", municipio: "MARATAIZES", codigo: "MAR2021" },
-    { edital: "001/2021", municipio: "MARECHAL FLORIANO", codigo: "MAF2021" },
-    { edital: "001/2021", municipio: "MARILANDIA", codigo: "MAL2021" },
-    { edital: "001/2021", municipio: "MONTANHA", codigo: "MON2021" },
-    { edital: "001/2021", municipio: "NOVA VENECIA", codigo: "NOV2021" },
-    { edital: "001/2021", municipio: "PEDRO CANARIO", codigo: "PEC2021" },
-    { edital: "001/2021", municipio: "PINHEIROS", codigo: "PIN2021" },
-    { edital: "001/2021", municipio: "PIUMA", codigo: "PIU2021" },
-    { edital: "001/2021", municipio: "RIO NOVO DO SUL", codigo: "RNS2021" },
-    { edital: "001/2021", municipio: "SANTA LEOPOLDINA", codigo: "SAL2021" },
-    { edital: "001/2021", municipio: "SANTA TERESA", codigo: "SAT2021" },
-    { edital: "001/2021", municipio: "SAO DOMINGOS DO NORTE", codigo: "SDN2021" },
-    { edital: "001/2021", municipio: "SAO GABRIEL DA PALHA", codigo: "SGP2021" },
-    { edital: "001/2021", municipio: "SAO JOSE DO CALCADO", codigo: "SJC2021" },
-    { edital: "001/2021", municipio: "SERRA", codigo: "SER2021" },
-    { edital: "001/2021", municipio: "VIANA", codigo: "VIA2021" },
-    { edital: "001/2021", municipio: "VILA PAVAO", codigo: "VIP2021" },
-    { edital: "001/2021", municipio: "VILA VELHA", codigo: "VIV2021" },
-    { edital: "001/2021", municipio: "VITORIA", codigo: "VIT2021" },
-    // 2022
-    { edital: "001/2022", municipio: "ALFREDO CHAVES", codigo: "ALF2022" },
-    { edital: "001/2022", municipio: "ANCHIETA", codigo: "ANC2022" },
-    { edital: "001/2022", municipio: "ARACRUZ", codigo: "ARA2022" },
-    { edital: "001/2022", municipio: "ATILIO VIVACQUA", codigo: "ATI2022" },
-    { edital: "001/2022", municipio: "BARRA DE SAO FRANCISCO", codigo: "BSF2022" },
-    { edital: "001/2022", municipio: "BOA ESPERANCA", codigo: "BOA2022" },
-    { edital: "001/2022", municipio: "BOM JESUS DO NORTE", codigo: "BJN2022" },
-    { edital: "001/2022", municipio: "CARIACICA", codigo: "CAR2022" },
-    { edital: "001/2022", municipio: "COLATINA", codigo: "COL2022" },
-    { edital: "001/2022", municipio: "CONCEICAO DA BARRA", codigo: "CDB2022" },
-    { edital: "001/2022", municipio: "CONCEICAO DO CASTELO", codigo: "CDC2022" },
-    { edital: "001/2022", municipio: "DOMINGOS MARTINS", codigo: "DOM2022" },
-    { edital: "001/2022", municipio: "DORES DO RIO PRETO", codigo: "DRP2022" },
-    { edital: "001/2022", municipio: "GUARAPARI", codigo: "GUA2022" },
-    { edital: "001/2022", municipio: "IBATIBA", codigo: "IBA2022" },
-    { edital: "001/2022", municipio: "IBITIRAMA", codigo: "IBI2022" },
-    { edital: "001/2022", municipio: "ITAPEMIRIM", codigo: "ITA2022" },
-    { edital: "001/2022", municipio: "JAGUARE", codigo: "JAG2022" },
-    { edital: "001/2022", municipio: "JOAO NEIVA", codigo: "JON2022" },
-    { edital: "001/2022", municipio: "LARANJA DA TERRA", codigo: "LAT2022" },
-    { edital: "001/2022", municipio: "MANTENOPOLIS", codigo: "MAN2022" },
-    { edital: "001/2022", municipio: "MARATAIZES", codigo: "MAR2022" },
-    { edital: "001/2022", municipio: "MARILANDIA", codigo: "MAL2022" },
-    { edital: "001/2022", municipio: "MONTANHA", codigo: "MON2022" },
-    { edital: "001/2022", municipio: "MUNIZ FREIRE", codigo: "MUF2022" },
-    { edital: "001/2022", municipio: "MUQUI", codigo: "MUQ2022" },
-    { edital: "001/2022", municipio: "NOVA VENECIA", codigo: "NOV2022" },
-    { edital: "001/2022", municipio: "PANCAS", codigo: "PAN2022" },
-    { edital: "001/2022", municipio: "PINHEIROS", codigo: "PIN2022" },
-    { edital: "001/2022", municipio: "PIUMA", codigo: "PIU2022" },
-    { edital: "001/2022", municipio: "SAO DOMINGOS DO NORTE", codigo: "SDN2022" },
-    { edital: "001/2022", municipio: "SAO JOSE DO CALCADO", codigo: "SJC2022" },
-    { edital: "001/2022", municipio: "SAO MATEUS", codigo: "SAM2022" },
-    { edital: "001/2022", municipio: "VARGEM ALTA", codigo: "VAA2022" },
-    { edital: "001/2022", municipio: "VILA PAVAO", codigo: "VIP2022" },
-    { edital: "001/2022", municipio: "VILA VELHA", codigo: "VIV2022" },
-    { edital: "001/2022", municipio: "VITORIA", codigo: "VIT2022" },
-    // 2023
-    { edital: "001/2023", municipio: "AFONSO CLAUDIO", codigo: "AFC2023" },
-    { edital: "001/2023", municipio: "AGUIA BRANCA", codigo: "AGU2023" },
-    { edital: "001/2023", municipio: "ALEGRE", codigo: "ALE2023" },
-    { edital: "001/2023", municipio: "ALTO RIO NOVO", codigo: "ARN2023" },
-    { edital: "001/2023", municipio: "ANCHIETA", codigo: "ANC2023" },
-    { edital: "001/2023", municipio: "ARACRUZ", codigo: "ARA2023" },
-    { edital: "001/2023", municipio: "ATILIO VIVACQUA", codigo: "ATI2023" },
-    { edital: "001/2023", municipio: "BOA ESPERANCA", codigo: "BOA2023" },
-    { edital: "001/2023", municipio: "BOM JESUS DO NORTE", codigo: "BJN2023" },
-    { edital: "001/2023", municipio: "CACHOEIRO DE ITAPEMIRIM", codigo: "CAC2023" },
-    { edital: "001/2023", municipio: "CARIACICA", codigo: "CAR2023" },
-    { edital: "001/2023", municipio: "CONCEICAO DO CASTELO", codigo: "CDC2023" },
-    { edital: "001/2023", municipio: "FUNDAO", codigo: "FUN2023" },
-    { edital: "001/2023", municipio: "GUACUI", codigo: "GUA2023" },
-    { edital: "001/2023", municipio: "GUARAPARI", codigo: "GUR2023" },
-    { edital: "001/2023", municipio: "IBATIBA", codigo: "IBA2023" },
-    { edital: "001/2023", municipio: "IBIRACU", codigo: "IBI2023" },
-    { edital: "001/2023", municipio: "IRUPI", codigo: "IRU2023" },
-    { edital: "001/2023", municipio: "ITAGUACU", codigo: "ITG2023" },
-    { edital: "001/2023", municipio: "ITAPEMIRIM", codigo: "ITA2023" },
-    { edital: "001/2023", municipio: "JERONIMO MONTEIRO", codigo: "JEM2023" },
-    { edital: "001/2023", municipio: "JOAO NEIVA", codigo: "JON2023" },
-    { edital: "001/2023", municipio: "LARANJA DA TERRA", codigo: "LAT2023" },
-    { edital: "001/2023", municipio: "MARATAIZES", codigo: "MAR2023" },
-    { edital: "001/2023", municipio: "MARECHAL FLORIANO", codigo: "MAF2023" },
-    { edital: "001/2023", municipio: "MARILANDIA", codigo: "MAL2023" },
-    { edital: "001/2023", municipio: "MIMOSO DO SUL", codigo: "MIS2023" },
-    { edital: "001/2023", municipio: "MONTANHA", codigo: "MON2023" },
-    { edital: "001/2023", municipio: "MUNIZ FREIRE", codigo: "MUF2023" },
-    { edital: "001/2023", municipio: "MUQUI", codigo: "MUQ2023" },
-    { edital: "001/2023", municipio: "NOVA VENECIA", codigo: "NOV2023" },
-    { edital: "001/2023", municipio: "PANCAS", codigo: "PAN2023" },
-    { edital: "001/2023", municipio: "PEDRO CANARIO", codigo: "PEC2023" },
-    { edital: "001/2023", municipio: "PINHEIROS", codigo: "PIN2023" },
-    { edital: "001/2023", municipio: "SANTA MARIA DE JETIBA", codigo: "SMJ2023" },
-    { edital: "001/2023", municipio: "SAO MATEUS", codigo: "SAM2023" },
-    { edital: "001/2023", municipio: "SAO ROQUE DO CANAA", codigo: "SRC2023" },
-    { edital: "001/2023", municipio: "SERRA", codigo: "SER2023" },
-    { edital: "001/2023", municipio: "VARGEM ALTA", codigo: "VAA2023" },
-    { edital: "001/2023", municipio: "VILA PAVAO", codigo: "VIP2023" },
-    { edital: "001/2023", municipio: "VILA VALERIO", codigo: "VIV2023" },
-    { edital: "001/2023", municipio: "VILA VELHA", codigo: "VIL2023" },
-    { edital: "001/2023", municipio: "VITORIA", codigo: "VIT2023" }
-];
+        { edital: "001/2021", municipio: "AGUIA BRANCA" }, { edital: "001/2021", municipio: "ANCHIETA" }, { edital: "001/2021", municipio: "ARACRUZ" }, { edital: "001/2021", municipio: "BAIXO GUANDU" }, { edital: "001/2021", municipio: "BARRA DE SAO FRANCISCO" }, { edital: "001/2021", municipio: "CACHOEIRO DE ITAPEMIRIM" }, { edital: "001/2021", municipio: "CARIACICA" }, { edital: "001/2021", municipio: "COLATINA" }, { edital: "001/2021", municipio: "CONCEICAO DA BARRA" }, { edital: "001/2021", municipio: "DOMINGOS MARTINS" }, { edital: "001/2021", municipio: "ECOPORANGA" }, { edital: "001/2021", municipio: "GUACUI" }, { edital: "001/2021", municipio: "IBATIBA" }, { edital: "001/2021", municipio: "IBIRACU" }, { edital: "001/2021", municipio: "ICONHA" }, { edital: "001/2021", municipio: "ITAPEMIRIM" }, { edital: "001/2021", municipio: "ITARANA" }, { edital: "001/2021", municipio: "JAGUARE" }, { edital: "001/2021", municipio: "LARANJA DA TERRA" }, { edital: "001/2021", municipio: "LINHARES" }, { edital: "001/2021", municipio: "MARATAIZES" }, { edital: "001/2021", municipio: "MARECHAL FLORIANO" }, { edital: "001/2021", municipio: "MARILANDIA" }, { edital: "001/2021", municipio: "MONTANHA" }, { edital: "001/2021", municipio: "NOVA VENECIA" }, { edital: "001/2021", municipio: "PEDRO CANARIO" }, { edital: "001/2021", municipio: "PINHEIROS" }, { edital: "001/2021", municipio: "PIUMA" }, { edital: "001/2021", municipio: "RIO NOVO DO SUL" }, { edital: "001/2021", municipio: "SANTA LEOPOLDINA" }, { edital: "001/2021", municipio: "SANTA TERESA" }, { edital: "001/2021", municipio: "SAO DOMINGOS DO NORTE" }, { edital: "001/2021", municipio: "SAO GABRIEL DA PALHA" }, { edital: "001/2021", municipio: "SAO JOSE DO CALCADO" }, { edital: "001/2021", municipio: "SERRA" }, { edital: "001/2021", municipio: "VIANA" }, { edital: "001/2021", municipio: "VILA PAVAO" }, { edital: "001/2021", municipio: "VILA VELHA" }, { edital: "001/2021", municipio: "VITORIA" },
+        { edital: "001/2022", municipio: "ALFREDO CHAVES" }, { edital: "001/2022", municipio: "ANCHIETA" }, { edital: "001/2022", municipio: "ARACRUZ" }, { edital: "001/2022", municipio: "ATILIO VIVACQUA" }, { edital: "001/2022", municipio: "BARRA DE SAO FRANCISCO" }, { edital: "001/2022", municipio: "BOA ESPERANCA" }, { edital: "001/2022", municipio: "BOM JESUS DO NORTE" }, { edital: "001/2022", municipio: "CARIACICA" }, { edital: "001/2022", municipio: "COLATINA" }, { edital: "001/2022", municipio: "CONCEICAO DA BARRA" }, { edital: "001/2022", municipio: "CONCEICAO DO CASTELO" }, { edital: "001/2022", municipio: "DOMINGOS MARTINS" }, { edital: "001/2022", municipio: "DORES DO RIO PRETO" }, { edital: "001/2022", municipio: "GUARAPARI" }, { edital: "001/2022", municipio: "IBATIBA" }, { edital: "001/2022", municipio: "IBITIRAMA" }, { edital: "001/2022", municipio: "ITAPEMIRIM" }, { edital: "001/2022", municipio: "JAGUARE" }, { edital: "001/2022", municipio: "JOAO NEIVA" }, { edital: "001/2022", municipio: "LARANJA DA TERRA" }, { edital: "001/2022", municipio: "MANTENOPOLIS" }, { edital: "001/2022", municipio: "MARATAIZES" }, { edital: "001/2022", municipio: "MARILANDIA" }, { edital: "001/2022", municipio: "MONTANHA" }, { edital: "001/2022", municipio: "MUNIZ FREIRE" }, { edital: "001/2022", municipio: "MUQUI" }, { edital: "001/2022", municipio: "NOVA VENECIA" }, { edital: "001/2022", municipio: "PANCAS" }, { edital: "001/2022", municipio: "PINHEIROS" }, { edital: "001/2022", municipio: "PIUMA" }, { edital: "001/2022", municipio: "SAO DOMINGOS DO NORTE" }, { edital: "001/2022", municipio: "SAO JOSE DO CALCADO" }, { edital: "001/2022", municipio: "SAO MATEUS" }, { edital: "001/2022", municipio: "VARGEM ALTA" }, { edital: "001/2022", municipio: "VILA PAVAO" }, { edital: "001/2022", municipio: "VILA VELHA" }, { edital: "001/2022", municipio: "VITORIA" },
+        { edital: "001/2023", municipio: "AFONSO CLAUDIO" }, { edital: "001/2023", municipio: "AGUIA BRANCA" }, { edital: "001/2023", municipio: "ALEGRE" }, { edital: "001/2023", municipio: "ALTO RIO NOVO" }, { edital: "001/2023", municipio: "ANCHIETA" }, { edital: "001/2023", municipio: "ARACRUZ" }, { edital: "001/2023", municipio: "ATILIO VIVACQUA" }, { edital: "001/2023", municipio: "BOA ESPERANCA" }, { edital: "001/2023", municipio: "BOM JESUS DO NORTE" }, { edital: "001/2023", municipio: "CACHOEIRO DE ITAPEMIRIM" }, { edital: "001/2023", municipio: "CARIACICA" }, { edital: "001/2023", municipio: "CONCEICAO DO CASTELO" }, { edital: "001/2023", municipio: "FUNDAO" }, { edital: "001/2023", municipio: "GUACUI" }, { edital: "001/2023", municipio: "GUARAPARI" }, { edital: "001/2023", municipio: "IBATIBA" }, { edital: "001/2023", municipio: "IBIRACU" }, { edital: "001/2023", municipio: "IRUPI" }, { edital: "001/2023", municipio: "ITAGUACU" }, { edital: "001/2023", municipio: "ITAPEMIRIM" }, { edital: "001/2023", municipio: "JERONIMO MONTEIRO" }, { edital: "001/2023", municipio: "JOAO NEIVA" }, { edital: "001/2023", municipio: "LARANJA DA TERRA" }, { edital: "001/2023", municipio: "MARATAIZES" }, { edital: "001/2023", municipio: "MARECHAL FLORIANO" }, { edital: "001/2023", municipio: "MARILANDIA" }, { edital: "001/2023", municipio: "MIMOSO DO SUL" }, { edital: "001/2023", municipio: "MONTANHA" }, { edital: "001/2023", municipio: "MUNIZ FREIRE" }, { edital: "001/2023", municipio: "MUQUI" }, { edital: "001/2023", municipio: "NOVA VENECIA" }, { edital: "001/2023", municipio: "PANCAS" }, { edital: "001/2023", municipio: "PEDRO CANARIO" }, { edital: "001/2023", municipio: "PINHEIROS" }, { edital: "001/2023", municipio: "SANTA MARIA DE JETIBA" }, { edital: "001/2023", municipio: "SAO MATEUS" }, { edital: "001/2023", municipio: "SAO ROQUE DO CANAA" }, { edital: "001/2023", municipio: "SERRA" }, { edital: "001/2023", municipio: "VARGEM ALTA" }, { edital: "001/2023", municipio: "VILA PAVAO" }, { edital: "001/2023", municipio: "VILA VALERIO" }, { edital: "001/2023", municipio: "VILA VELHA" }, { edital: "001/2023", municipio: "VITORIA" }
+    ];
 
-    function realizarLogin() { const cod = document.getElementById('codigo_acesso').value.toUpperCase(); const user = bancoUsuarios.find(u => u.codigo === cod); if(user) { municipioLogado = user; document.getElementById('tela_login').style.display='none'; document.getElementById('sistema_principal').style.display='block'; document.getElementById('m_edital').value = user.edital; document.getElementById('m_municipio').value = user.municipio; renderHistorico(); } else { alert("Código inválido!"); } }
+    function verificarToken() {
+        const tokenDigitado = document.getElementById('codigo_acesso').value.toUpperCase().trim();
+        const tokenEncontrado = tokensMunicipios.find(t => t.codigo === tokenDigitado);
+
+        if (tokenEncontrado) {
+            const nomeMuniNorm = tokenEncontrado.nome.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const editaisDisponiveis = bancoUsuarios.filter(u => u.municipio === nomeMuniNorm);
+
+            if (editaisDisponiveis.length === 0) return alert("Município validado, mas nenhum edital encontrado.");
+
+            const select = document.getElementById('selecao_edital');
+            select.innerHTML = "";
+            editaisDisponiveis.forEach(e => {
+                let opt = document.createElement('option');
+                opt.value = JSON.stringify(e);
+                opt.innerHTML = `Edital ${e.edital}`;
+                select.appendChild(opt);
+            });
+
+            document.getElementById('label_municipio').innerHTML = `Município: <b>${tokenEncontrado.nome}</b>`;
+            document.getElementById('etapa_1').classList.add('hidden');
+            document.getElementById('etapa_2').classList.remove('hidden');
+        } else {
+            alert("Token inválido!");
+        }
+    }
+
+    function finalizarLogin() {
+        const dados = JSON.parse(document.getElementById('selecao_edital').value);
+        municipioLogado = dados;
+        document.getElementById('tela_login').style.display = 'none';
+        document.getElementById('sistema_principal').style.display = 'block';
+        document.getElementById('m_edital').value = dados.edital;
+        document.getElementById('m_municipio').value = dados.municipio;
+        renderHistorico();
+    }
+
+    // FUNÇÕES DE SUPORTE (MANTIDAS EXATAMENTE COMO NO ORIGINAL)
     function mudarAba(abaId) { document.querySelectorAll('.conteudo_aba').forEach(a => a.style.display='none'); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(abaId).style.display='block'; }
     function parseMoney(v) { return parseFloat(v.replace(/[R$\s.]/g,'').replace(',','.')) || 0; }
     function formatMoney(n) { return "R$ " + n.toLocaleString('pt-BR',{minimumFractionDigits:2}); }
@@ -301,40 +222,15 @@
     function atualizarPainelControle() { const totalParaGastar = parseMoney(document.getElementById('v_gastos_display').innerText); const totalJaLancado = listaDespesas.reduce((soma, item) => soma + parseMoney(item.valor), 0); const restante = totalParaGastar - totalJaLancado; const el = document.getElementById('saldo_restante_label'); el.innerText = formatMoney(restante); el.style.color = (restante < -0.01) ? 'red' : (Math.abs(restante) < 0.01 ? 'green' : '#856404'); }
     function toggleNFVinculada() { document.getElementById('div_nf_vinc').classList.toggle('hidden', document.getElementById('f_tipo_doc').value !== "GUIA DE IMPOSTO"); }
     function atualizarNatureza() { const sel = document.getElementById('f_class'); document.getElementById('f_natureza').value = sel.options[sel.selectedIndex].parentNode.label || ""; }
-
-    function adicionarGasto() {
-        const valorNovoGasto = parseMoney(document.getElementById('f_valor').value);
-        const totalParaGastar = parseMoney(document.getElementById('v_gastos_display').innerText);
-        const totalJaLancado = listaDespesas.reduce((soma, item) => soma + parseMoney(item.valor), 0);
-        if ((totalJaLancado + valorNovoGasto) > (totalParaGastar + 0.01)) return alert("ERRO: Valor supera o saldo disponível!");
-        
-        const item = { forn: document.getElementById('f_fornecedor').value, cnpj: document.getElementById('f_cnpj_fav').value, tipo_doc: document.getElementById('f_tipo_doc').value, nf_vinc: document.getElementById('f_nf_vinc').value, num_doc: document.getElementById('f_num_doc').value, data_doc: document.getElementById('f_data_doc').value, classificacao: document.getElementById('f_class').value, natureza: document.getElementById('f_natureza').value, ob: document.getElementById('f_ob').value, data_pgto: document.getElementById('f_data_pgto').value, valor: document.getElementById('f_valor').value };
-        if(!item.forn || !item.natureza || item.valor === "R$ 0,00") return alert("Preencha os campos!");
-        listaDespesas.push(item); renderTabela(); 
-        document.getElementById('f_fornecedor').value = ""; document.getElementById('f_cnpj_fav').value = ""; document.getElementById('f_tipo_doc').selectedIndex = 0; document.getElementById('f_num_doc').value = ""; document.getElementById('f_data_doc').value = ""; document.getElementById('f_class').selectedIndex = 0; document.getElementById('f_natureza').value = ""; document.getElementById('f_ob').value = ""; document.getElementById('f_data_pgto').value = ""; document.getElementById('f_valor').value = "R$ 0,00"; document.getElementById('div_nf_vinc').classList.add('hidden');
-        atualizarPainelControle();
-    }
-
+    function adicionarGasto() { const valorNovoGasto = parseMoney(document.getElementById('f_valor').value); const totalParaGastar = parseMoney(document.getElementById('v_gastos_display').innerText); const totalJaLancado = listaDespesas.reduce((soma, item) => soma + parseMoney(item.valor), 0); if ((totalJaLancado + valorNovoGasto) > (totalParaGastar + 0.01)) return alert("ERRO: Valor supera o saldo disponível!"); const item = { forn: document.getElementById('f_fornecedor').value, cnpj: document.getElementById('f_cnpj_fav').value, tipo_doc: document.getElementById('f_tipo_doc').value, nf_vinc: document.getElementById('f_nf_vinc').value, num_doc: document.getElementById('f_num_doc').value, data_doc: document.getElementById('f_data_doc').value, classificacao: document.getElementById('f_class').value, natureza: document.getElementById('f_natureza').value, ob: document.getElementById('f_ob').value, data_pgto: document.getElementById('f_data_pgto').value, valor: document.getElementById('f_valor').value }; if(!item.forn || !item.natureza || item.valor === "R$ 0,00") return alert("Preencha os campos!"); listaDespesas.push(item); renderTabela(); document.getElementById('f_fornecedor').value = ""; document.getElementById('f_cnpj_fav').value = ""; document.getElementById('f_tipo_doc').selectedIndex = 0; document.getElementById('f_num_doc').value = ""; document.getElementById('f_data_doc').value = ""; document.getElementById('f_class').selectedIndex = 0; document.getElementById('f_natureza').value = ""; document.getElementById('f_ob').value = ""; document.getElementById('f_data_pgto').value = ""; document.getElementById('f_valor').value = "R$ 0,00"; document.getElementById('div_nf_vinc').classList.add('hidden'); atualizarPainelControle(); }
     function renderTabela() { document.querySelector('#tabela_gastos tbody').innerHTML = listaDespesas.map((d, i) => `<tr><td>${i+1}</td><td>${d.forn}</td><td>${d.natureza}</td><td>${d.valor}</td><td><button onclick="listaDespesas.splice(${i},1);renderTabela();atualizarPainelControle()">X</button></td></tr>`).join(''); }
-
     function formatarMoeda(valor) { let v = parseFloat(valor.toString().replace(/[R$\s.]/g,'').replace(',','.')); return isNaN(v) ? valor : "R$ " + v.toLocaleString('pt-BR', {minimumFractionDigits: 2}); }
-
-    function renderHistorico() {
-        fetch(SCRIPT_URL).then(res => res.json()).then(dados => {
-            let meuHistorico = dados.filter(x => x.municipio === municipioLogado.municipio);
-            let grupos = {};
-            meuHistorico.forEach(x => { if (!grupos[x.mes]) grupos[x.mes] = { edital: x.edital, anterior: x.anterior, repasses: x.repasses, rendimentos: x.rendimentos, atual: x.atual, itens: [] }; grupos[x.mes].itens.push(x); });
-            const container = document.getElementById('lista_historico');
-            container.innerHTML = ordemMeses.filter(mes => grupos[mes]).map((mes, i) => {
-                let grupo = grupos[mes];
-                let totalDespesas = grupo.itens.reduce((soma, it) => soma + parseFloat(it.valor.toString().replace(/[R$\s.]/g,'').replace(',','.') || 0), 0);
-                let tabelaItens = grupo.itens.map(it => `<tr style="font-size:11px;"><td>${it.forn}</td><td>${it.natureza}</td><td>${it.tipo_doc}</td><td>${it.num_doc}</td><td>${it.ob}</td><td>${formatarMoeda(it.valor)}</td></tr>`).join('');
-                return `<div class="item-historico"><div class="header-item" onclick="toggleDetalhes(${i})" style="background:#e9ecef; border-bottom:1px solid #ccc; display: flex; flex-wrap: wrap; gap: 10px;"><span style="width: 100%;"><b>${mes}</b> - Edital ${grupo.edital}</span><div style="font-size:10px; font-weight:normal;"><b>Saldo Ant:</b> ${formatarMoeda(grupo.anterior)} | <b>Repasses:</b> ${formatarMoeda(grupo.repasses)} | <b>Rendimentos:</b> ${formatarMoeda(grupo.rendimentos)} | <b>Saldo Atual:</b> ${formatarMoeda(grupo.atual)} | <b>Total Desp:</b> ${formatarMoeda(totalDespesas)}</div></div><div id="detalhes_${i}" class="detalhes-ocultos"><table style="width:100%; border-collapse:collapse; margin-top:5px;"><thead><tr style="background:#eee; font-size:10px;"><th>Fornecedor</th><th>Natureza</th><th>Tipo</th><th>N° Doc</th><th>OB</th><th>Valor</th></tr></thead><tbody>${tabelaItens}</tbody></table></div></div>`;
-            }).join('');
-        });
-    }
-
+    function gerarPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF('l', 'mm', 'a4'); doc.setFontSize(20); doc.setTextColor(0, 86, 179); doc.text("PROETI - ES | Relatório de Monitoramento Mensal", 148, 15, { align: 'center' }); doc.setFontSize(12); doc.setTextColor(0, 0, 0); doc.text(`Município: ${document.getElementById('m_municipio').value}`, 14, 30); doc.text(`Edital: ${document.getElementById('m_edital').value}`, 14, 37); doc.text(`Mês de Referência: ${document.getElementById('m_mes').value}`, 14, 44); doc.setFontSize(14); doc.text("Resumo Financeiro", 14, 55); doc.setFontSize(10); doc.rect(14, 58, 267, 15); doc.text(`Saldo Anterior: ${document.getElementById('s_anterior').value}`, 16, 64); doc.text(`Repasses: ${document.getElementById('s_repasses').value}`, 80, 64); doc.text(`Rendimentos: ${document.getElementById('s_rendimentos').value}`, 150, 64); doc.text(`Saldo Atual: ${document.getElementById('s_atual').value}`, 220, 64); const columns = ["Fornecedor", "CNPJ", "Tipo Doc", "NF Vinc", "Nº Doc", "Data Doc", "Natureza", "OB", "Data Pgto", "Valor"]; const data = listaDespesas.map(d => [d.forn, d.cnpj, d.tipo_doc, d.nf_vinc, d.num_doc, d.data_doc, d.natureza, d.ob, d.data_pgto, d.valor]); doc.autoTable({ startY: 78, head: [columns], body: data, theme: 'striped', headStyles: { fillColor: [0, 86, 179] }, styles: { fontSize: 8, cellPadding: 2 } }); doc.text(`Gerado em: ${new Date().toLocaleString()} - Sistema de Monitoramento PROETI ES`, 14, 200); doc.save(`Monitoramento_${document.getElementById('m_municipio').value}_${document.getElementById('m_mes').value}.pdf`); }
+    function prepararEnvio() { const mes = document.getElementById('m_mes').value; if(!mes) return alert("Selecione o mês!"); gerarPDF(); const payload = { edital: document.getElementById('m_edital').value, municipio: municipioLogado.municipio, mes: mes, totais: { anterior: document.getElementById('s_anterior').value, repasses: document.getElementById('s_repasses').value, rendimentos: document.getElementById('s_rendimentos').value, atual: document.getElementById('s_atual').value }, itens: listaDespesas }; fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }).then(() => { alert("Enviado com sucesso!"); location.reload(); }).catch(err => { console.error(err); alert("Erro ao enviar."); }); }
+    function renderHistorico() { fetch(SCRIPT_URL).then(res => res.json()).then(dados => { let meuHistorico = dados.filter(x => x.municipio === municipioLogado.municipio); let grupos = {}; meuHistorico.forEach(x => { if (!grupos[x.mes]) grupos[x.mes] = { edital: x.edital, anterior: x.anterior, repasses: x.repasses, rendimentos: x.rendimentos, atual: x.atual, itens: [] }; grupos[x.mes].itens.push(x); }); const container = document.getElementById('lista_historico'); container.innerHTML = ordemMeses.filter(mes => grupos[mes]).map((mes, i) => { let grupo = grupos[mes]; let totalDespesas = grupo.itens.reduce((soma, it) => soma + parseFloat(it.valor.toString().replace(/[R$\s.]/g,'').replace(',','.') || 0), 0); let tabelaItens = grupo.itens.map(it => `<tr style="font-size:11px;"><td>${it.forn}</td><td>${it.natureza}</td><td>${it.tipo_doc}</td><td>${it.num_doc}</td><td>${it.ob}</td><td>${formatarMoeda(it.valor)}</td></tr>`).join(''); return `<div class="item-historico"><div class="header-item" onclick="toggleDetalhes(${i})" style="background:#e9ecef; border-bottom:1px solid #ccc; display: flex; flex-wrap: wrap; gap: 10px;"><span style="width: 100%;"><b>${mes}</b> - Edital ${grupo.edital}</span><div style="font-size:10px; font-weight:normal;"><b>Saldo Ant:</b> ${formatarMoeda(grupo.anterior)} | <b>Repasses:</b> ${formatarMoeda(grupo.repasses)} | <b>Rendimentos:</b> ${formatarMoeda(grupo.rendimentos)} | <b>Saldo Atual:</b> ${formatarMoeda(grupo.atual)} | <b>Total Desp:</b> ${formatarMoeda(totalDespesas)}</div></div><div id="detalhes_${i}" class="detalhes-ocultos"><table style="width:100%; border-collapse:collapse; margin-top:5px;"><thead><tr style="background:#eee; font-size:10px;"><th>Fornecedor</th><th>Natureza</th><th>Tipo</th><th>N° Doc</th><th>OB</th><th>Valor</th></tr></thead><tbody>${tabelaItens}</tbody></table></div></div>`; }).join(''); }); }
     function toggleDetalhes(id) { const el = document.getElementById('detalhes_' + id); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
+    document.getElementById('f_cnpj_fav').addEventListener('input', function (e) { let v = e.target.value.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2"); e.target.value = v.substring(0, 18); });
+    document.querySelectorAll('.moeda').forEach(input => { input.addEventListener('input', e => { let v = e.target.value.replace(/\D/g,''); v = (v/100).toFixed(2).replace(".",",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); e.target.value = "R$ " + v; validarLogica(); atualizarPainelControle(); }); });
 </script>
 </body>
 </html>
