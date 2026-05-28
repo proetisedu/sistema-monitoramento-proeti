@@ -324,9 +324,12 @@
         if (difCalculada > 0.01) {
             if (listaDespesas.length === 0) return alert("ERRO: Existe uma diferença financeira positiva a ser justificada. Você deve lançar pelo menos 1 despesa.");
             const totalJaLancado = listaDespesas.reduce((soma, item) => soma + parseMoney(item.valor), 0);
-            if (Math.abs(totalJaLancado - difCalculada) > 0.01) return alert("ERRO: A soma das despesas (" + formatMoney(totalJaLancado) + ") deve ser exatamente igual ao valor calculado da diferença (" + formatMoney(difCalculada) + ").");
+            if (Math.abs(totalJaLancado - difCalculada) > 0.01) return alert("ERRO: A soma das despesas (" + formatMoney(totalJaLancado) + ") deve ser exatamente igual ao valor calculated da diferença (" + formatMoney(difCalculada) + ").");
         }
+        
         gerarPDF(); 
+        
+        // Ajustado de "items" para "itens" para conversar perfeitamente com o histórico e o backend
         const payload = { 
             acao: modoEdicao ? "editar" : "novo", 
             mesOriginal: mesEdicaoOriginal, 
@@ -334,8 +337,9 @@
             municipio: municipioLogado.municipio, 
             mes: mes, 
             totais: { anterior: document.getElementById('s_anterior').value, repasses: document.getElementById('s_repasses').value, rendimentos: document.getElementById('s_rendimentos').value, devolvidos: document.getElementById('s_devolvidos').value, presidential: "0", atual: document.getElementById('s_atual').value }, 
-            items: listaDespesas 
+            itens: listaDespesas 
         }; 
+        
         fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }).then(() => { 
             alert("Enviado com sucesso!"); 
             location.reload(); 
@@ -397,19 +401,22 @@
                     }; 
                 }
                 
-                grupos[x.mes].itens.push({
-                    forn: x.forn,                   
-                    cnpj: x.cnpj,                   
-                    tipo_doc: x.tipo_doc,           
-                    nf_vinc: x.nf_vinc,             
-                    num_doc: x.num_doc,             
-                    data_doc: x.data_doc,           
-                    classificacao: x.classificacao, 
-                    natureza: x.natureza,           
-                    ob: x.ob,                       
-                    data_pgto: x.data_pgto,         
-                    valor: x.valor                  
-                }); 
+                // Evita empurrar itens vazios ou sem identificação de despesa real para o histórico
+                if (x.forn && x.forn !== "Sem Despesas") {
+                    grupos[x.mes].itens.push({
+                        forn: x.forn,                    
+                        cnpj: x.cnpj,                    
+                        tipo_doc: x.tipo_doc,            
+                        nf_vinc: x.nf_vinc,              
+                        num_doc: x.num_doc,              
+                        data_doc: x.data_doc,            
+                        classificacao: x.classificacao, 
+                        natureza: x.natureza,            
+                        ob: x.ob,                        
+                        data_pgto: x.data_pgto,          
+                        valor: x.valor                  
+                    }); 
+                }
             }); 
             
             const container = document.getElementById('lista_historico'); 
@@ -427,6 +434,10 @@
                         <td>${formatarMoeda(it.valor)}</td>
                     </tr>
                 `).join(''); 
+
+                if (grupo.itens.length === 0) {
+                    tabelaItens = `<tr><td colspan="6" style="text-align:center; color:#888;">Nenhuma despesa lançada para este mês (Saldo não alterado ou apenas Devolução/Rendimento).</td></tr>`;
+                }
                 
                 let grupoStr = encodeURIComponent(JSON.stringify(grupo));
                 return `
