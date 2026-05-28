@@ -30,6 +30,9 @@
         .detalhes-ocultos { display: none; padding: 10px; background: #f9f9f9; border-top: 1px solid #eee; font-size: 12px; }
         .item-historico { border: 1px solid #ddd; margin-bottom: 8px; border-radius: 5px; overflow: hidden; }
         .header-item { padding: 12px; background: #fff; cursor: pointer; display: flex; justify-content: space-between; }
+        .btn-tbl { padding: 4px 8px; font-size: 11px; font-weight: bold; cursor: pointer; border: none; border-radius: 3px; margin-right: 4px; }
+        .btn-tbl-edit { background: #ffc107; color: #212529; }
+        .btn-tbl-del { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
@@ -51,7 +54,7 @@
 
 <div id="sistema_principal" class="container">
     <div class="tabs">
-        <button class="tab-btn active" onclick="mudarAba('aba_envio')">Enviar Monitoramento</button>
+        <button class="tab-btn active" id="btn_aba_envio" onclick="mudarAba('aba_envio')">Enviar Monitoramento</button>
         <button class="tab-btn" onclick="mudarAba('aba_consulta')">Histórico Local</button>
         <button onclick="location.reload()" style="margin-left:auto; color:red; border:none; background:none; cursor:pointer;">Sair</button>
     </div>
@@ -66,6 +69,7 @@
             <div><label>Saldo Mês Anterior</label><input type="text" id="s_anterior" class="moeda" oninput="validarLogica()" value="R$ 0,00"></div>
             <div><label>Repasses no Mês</label><input type="text" id="s_repasses" class="moeda" oninput="validarLogica()" value="R$ 0,00"></div>
             <div><label>Rendimentos no Mês</label><input type="text" id="s_rendimentos" class="moeda" oninput="validarLogica()" value="R$ 0,00"></div>
+            <div><label>Recursos Devolvidos para a Conta</label><input type="text" id="s_devolvidos" class="moeda" oninput="validarLogica()" value="R$ 0,00"></div>
             <div><label>Saldo Atual</label><input type="text" id="s_atual" class="moeda" oninput="validarLogica()" value="R$ 0,00"></div>
             <div><label>Total Despesas</label><div id="v_gastos_display" class="saldo-final">R$ 0,00</div></div>
         </div>
@@ -73,20 +77,20 @@
         <div id="area_despesas">
             <div id="painel_controle" class="painel-controle">Saldo restante para lançar: <span id="saldo_restante_label">R$ 0,00</span></div>
             <div class="grid-form">
-                <div class="full-width"><label>18. Nome do Fornecedor</label><input type="text" id="f_fornecedor"></div>
+                <div class="full-width"><label id="label_f_fornecedor">18. Nome do Fornecedor</label><input type="text" id="f_fornecedor"></div>
                 <div><label>19. CNPJ</label><input type="text" id="f_cnpj_fav" maxlength="18"></div>
                 <div><label>20. Tipo de doc</label><select id="f_tipo_doc" onchange="toggleNFVinculada()"><option>NOTA FISCAL</option><option>GUIA DE IMPOSTO</option><option>SALÁRIO DE FUNCIONÁRIO</option><option>PREVIDÊNCIA</option><option>CONSIGNADO DE FUNCIONÁRIO</option><option>OUTRO</option></select></div>
                 <div id="div_nf_vinc" class="hidden"><label>21. NF vinculada</label><input type="text" id="f_nf_vinc"></div>
                 <div><label>22. N° Documento</label><input type="text" id="f_num_doc"></div>
                 <div><label>23. Data Doc</label><input type="date" id="f_data_doc"></div>
-                <div><label>24. Classificação</label><select id="f_class" onchange="atualizarNatureza()"><option value="">Selecione...</option><optgroup label="CUSTEIO"><option>Remuneração de profissionais da educação que atuam no programa PROETI nas escolas</option><option>Formação continuada de profissionais da educação vinculados às escolas participantes do PROETI</option><option>Seleção de profissionais para atuarem nas escolas participantes</option><option>Aquisição de produtos de manutenção e conservação</option><option>Contratação de serviços para manutenção e conservação</option><option>Aquisição de material de consumo para atividades de apoio ao ensino (materiais de expediente, didáticos, escolares, materiais de limpeza)</option><option>aquisição de materiais de consumo e utensílios para alimentação escolar</option><option>aluguel de equipamentos</option><option>aluguel de espaços físicos</option><option>contratação de serviços regulares</option><option>Serviços públicos</option><option>aquisição de materiais de laboratório</option><option>compra de materiais esportivos</option><option>transporte de alunos</option></optgroup><optgroup label="CAPITAL"><option>construção de instalações necessárias ao ensino</option><option>aquisição de equipamentos</option><option>compra de mobiliário</option><option>acervo para biblioteca</option></optgroup></select></div>
+                <div><label>24. Classificação</label><select id="f_class" onchange="atualizarNatureza(); tratarClassificacaoEspecial();"><option value="">Selecione...</option><optgroup label="CUSTEIO"><option>Remuneração de professionals da educação que atuam no programa PROETI nas escolas</option><option>Formação continuada de professionals da educação vinculados às escolas participantes do PROETI</option><option>Seleção de professionals para atuarem nas escolas participantes</option><option>Aquisição de produtos de manutenção e conservação</option><option>Contratação de serviços para manutenção e conservação</option><option>Aquisição de material de consumo para atividades de apoio ao ensino (materiais de expediente, didáticos, escolares, materiais de limpeza)</option><option>aquisição de materiais de consumo e utensílios para alimentação escolar</option><option>aluguel de equipamentos</option><option>aluguel de espaços físicos</option><option>contratação de serviços regulares</option><option>Serviços públicos</option><option>aquisição de materiais de laboratório</option><option>compra de materiais esportivos</option><option>transporte de alunos</option><option>Tarifas bancárias</option><option>Pagamento indevido realizado na conta</option><option>Estorno/devolução de pagamento indevido</option></optgroup><optgroup label="CAPITAL"><option>construção de instalações necessárias ao ensino</option><option>aquisição de equipamentos</option><option>compra de mobiliário</option><option>acervo para biblioteca</option></optgroup></select></div>
                 <div><label>25. Natureza</label><input type="text" id="f_natureza" readonly></div>
                 <div><label>26. N° OB</label><input type="text" id="f_ob"></div>
                 <div><label>27. Data Pgto</label><input type="date" id="f_data_pgto"></div>
                 <div><label>28. Valor</label><input type="text" id="f_valor" class="moeda" value="R$ 0,00"></div>
             </div>
-            <button class="btn btn-add" onclick="adicionarGasto()">ADICIONAR PAGAMENTO</button>
-            <table id="tabela_gastos"><thead><tr><th>Item</th><th>Fornecedor</th><th>Natureza</th><th>Valor</th><th>Ação</th></tr></thead><tbody></tbody></table>
+            <button id="btn_adicionar_pagamento" class="btn btn-add" onclick="adicionarGasto()">ADICIONAR PAGAMENTO</button>
+            <table id="tabela_gastos"><thead><tr><th>Item</th><th id="th_fornecedor">Fornecedor</th><th>Natureza</th><th>Valor</th><th>Ação</th></tr></thead><tbody></tbody></table>
         </div>
         <button id="btnEnviar" class="btn btn-save" onclick="prepararEnvio()">SALVAR, ENVIAR E GERAR PDF</button>
     </div>
@@ -98,80 +102,15 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMQRx_hoEZ_fxibVJk9T5PaeBeFU9E9Su77FdeFD-x6U8eBEFYzntVcKDHUxNZRC09/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9bO-xZdCu1AC9sjq6FD6-BuInmc0SKR49yhWraHQ40AJTFf5tG7WllaZ71dyCGK75/exec";
     let municipioLogado = null; let listaDespesas = []; const ordemMeses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    let modoEdicao = false; let mesEdicaoOriginal = null;
+    let indexEditando = null; 
 
-    // TABELA DE TOKENS POR MUNICÍPIO (ELIMINADO TOKEN POR EDITAL)
     const tokensMunicipios = [
-        { nome: "Afonso Claudio", codigo: "AFO1-26" },
-        { nome: "Águia Branca", codigo: "AGU2-26" },
-        { nome: "Alegre", codigo: "ALE3-26" },
-        { nome: "Alfredo Chaves", codigo: "ALF4-26" },
-        { nome: "Alto Rio Novo", codigo: "ARN5-26" },
-        { nome: "Anchieta", codigo: "ANC6-26" },
-        { nome: "Aracruz", codigo: "ARA7-26" },
-        { nome: "Atílio Vivacqua", codigo: "ATI8-26" },
-        { nome: "Baixo Guandu", codigo: "BAI9-26" },
-        { nome: "Barra de São Francisco", codigo: "BSF10-26" },
-        { nome: "Boa Esperança", codigo: "BOA11-26" },
-        { nome: "Bom Jesus do Norte", codigo: "BJN12-26" },
-        { nome: "Cachoeiro de Itapemirim", codigo: "CAC13-26" },
-        { nome: "Cariacica", codigo: "CAR14-26" },
-        { nome: "Colatina", codigo: "COL15-26" },
-        { nome: "Conceição da Barra", codigo: "CBA16-26" },
-        { nome: "Conceição do Castelo", codigo: "CCA17-26" },
-        { nome: "Domingos Martins", codigo: "DOM18-26" },
-        { nome: "Dores do Rio Preto", codigo: "DRP19-26" },
-        { nome: "Ecoporanga", codigo: "ECO20-26" },
-        { nome: "Fundão", codigo: "FUN21-26" },
-        { nome: "Guaçuí", codigo: "GUA22-26" },
-        { nome: "Guarapari", codigo: "GUA23-27" },
-        { nome: "Ibatiba", codigo: "IBA24-26" },
-        { nome: "Ibiraçu", codigo: "IBI25-26" },
-        { nome: "Ibitirama", codigo: "IBI26-27" },
-        { nome: "Iconha", codigo: "ICO27-26" },
-        { nome: "Irupi", codigo: "IRU28-26" },
-        { nome: "Itaguaçu", codigo: "ITA29-26" },
-        { nome: "Itapemirim", codigo: "ITA30-27" },
-        { nome: "Itarana", codigo: "ITA31-28" },
-        { nome: "Iuna", codigo: "IUN32-26" },
-        { nome: "Jaguaré", codigo: "JAG33-26" },
-        { nome: "Jerônimo Monteiro", codigo: "JER34-26" },
-        { nome: "João Neiva", codigo: "JOA35-26" },
-        { nome: "Laranja da Terra", codigo: "LAR36-26" },
-        { nome: "Linhares", codigo: "LIN37-26" },
-        { nome: "Mantenópolis", codigo: "MAN38-26" },
-        { nome: "Marataizes", codigo: "MAR39-26" },
-        { nome: "Marechal Floriano", codigo: "MFL40-26" },
-        { nome: "Marilândia", codigo: "MAR41-27" },
-        { nome: "Mimoso do Sul", codigo: "MIM42-26" },
-        { nome: "Montanha", codigo: "MON43-26" },
-        { nome: "Muniz freire", codigo: "MUN44-26" },
-        { nome: "Muqui", codigo: "MUQ45-26" },
-        { nome: "Nova Venécia", codigo: "NVN46-26" },
-        { nome: "Pancas", codigo: "PAN47-26" },
-        { nome: "Pedro Canário", codigo: "PCA48-26" },
-        { nome: "Pinheiros", codigo: "PIN49-26" },
-        { nome: "Piuma", codigo: "PIM50-26" },
-        { nome: "Rio Novo do Sul", codigo: "RNS51-26" },
-        { nome: "Santa Leopoldina", codigo: "SLE52-26" },
-        { nome: "Santa Maria de Jetibá", codigo: "SMJ53-26" },
-        { nome: "Santa Teresa", codigo: "STE54-26" },
-        { nome: "São Domingos do Norte", codigo: "SDN55-26" },
-        { nome: "São Gabriel da Palha", codigo: "SGP56-26" },
-        { nome: "São José do Calçado", codigo: "SJC57-26" },
-        { nome: "São Mateus", codigo: "SMA58-26" },
-        { nome: "São Roque do Canaã", codigo: "SRC59-26" },
-        { nome: "Serra", codigo: "SER60-26" },
-        { nome: "Vargem Alta", codigo: "VAL61-26" },
-        { nome: "Viana", codigo: "VIA62-26" },
-        { nome: "Vila Pavão", codigo: "VPA63-26" },
-        { nome: "Vila Valério", codigo: "VVA64-26" },
-        { nome: "Vila Velha", codigo: "VVE65-26" },
-        { nome: "Vitoria" , codigo: "VIT66-26" }
+        { nome: "Afonso Claudio", codigo: "AFO1-26" }, { nome: "Águia Branca", codigo: "AGU2-26" }, { nome: "Alegre", codigo: "ALE3-26" }, { nome: "Alfredo Chaves", codigo: "ALF4-26" }, { nome: "Alto Rio Novo", codigo: "ARN5-26" }, { nome: "Anchieta", codigo: "ANC6-26" }, { nome: "Aracruz", codigo: "ARA7-26" }, { nome: "Atílio Vivacqua", codigo: "ATI8-26" }, { nome: "Baixo Guandu", codigo: "BAI9-26" }, { nome: "Barra de São Francisco", codigo: "BSF10-26" }, { nome: "Boa Esperança", codigo: "BOA11-26" }, { nome: "Bom Jesus do Norte", codigo: "BJN12-26" }, { nome: "Cachoeiro de Itapemirim", codigo: "CAC13-26" }, { nome: "Cariacica", codigo: "CAR14-26" }, { nome: "Colatina", codigo: "COL15-26" }, { nome: "Conceição da Barra", codigo: "CBA16-26" }, { nome: "Conceição do Castelo", codigo: "CCA17-26" }, { nome: "Domingos Martins", codigo: "DOM18-26" }, { nome: "Dores do Rio Preto", codigo: "DRP19-26" }, { nome: "Ecoporanga", codigo: "ECO20-26" }, { nome: "Fundão", codigo: "FUN21-26" }, { nome: "Guaçuí", codigo: "GUA22-26" }, { nome: "Guarapari", codigo: "GUA23-27" }, { nome: "Ibatiba", codigo: "IBA24-26" }, { nome: "Ibiraçu", codigo: "IBI25-26" }, { nome: "Ibitirama", codigo: "IBI26-27" }, { nome: "Iconha", codigo: "ICO27-26" }, { nome: "Irupi", codigo: "IRU28-26" }, { nome: "Itaguaçu", codigo: "ITA29-26" }, { nome: "Itapemirim", codigo: "ITA30-27" }, { nome: "Itarana", codigo: "ITA31-28" }, { nome: "Iuna", codigo: "IUN32-26" }, { nome: "Jaguaré", codigo: "JAG33-26" }, { nome: "Jerônimo Monteiro", codigo: "JER34-26" }, { nome: "João Neiva", codigo: "JOA35-26" }, { nome: "Laranja da Terra", codigo: "LAR36-26" }, { nome: "Linhares", codigo: "LIN37-26" }, { nome: "Mantenópolis", codigo: "MAN38-26" }, { nome: "Marataizes", codigo: "MAR39-26" }, { nome: "Marechal Floriano", codigo: "MFL40-26" }, { nome: "Marilândia", codigo: "MAR41-27" }, { nome: "Mimoso do Sul", codigo: "MIM42-26" }, { nome: "Montanha", codigo: "MON43-26" }, { nome: "Muniz freire", codigo: "MUN44-26" }, { nome: "Muqui", codigo: "MUQ45-26" }, { nome: "Nova Venécia", codigo: "NVN46-26" }, { nome: "Pancas", codigo: "PAN47-26" }, { nome: "Pedro Canário", codigo: "PCA48-26" }, { nome: "Pinheiros", codigo: "PIN49-26" }, { nome: "Piuma", codigo: "PIM50-26" }, { nome: "Rio Novo do Sul", codigo: "RNS51-26" }, { nome: "Santa Leopoldina", codigo: "SLE52-26" }, { nome: "Santa Maria de Jetibá", codigo: "SMJ53-26" }, { nome: "Santa Teresa", codigo: "STE54-26" }, { nome: "São Domingos do Norte", codigo: "SDN55-26" }, { nome: "São Gabriel da Palha", codigo: "SGP56-26" }, { nome: "São José do Calçado", codigo: "SJC57-26" }, { nome: "São Mateus", codigo: "SMA58-26" }, { nome: "São Roque do Canaã", codigo: "SRC59-26" }, { nome: "Serra", codigo: "SER60-26" }, { nome: "Vargem Alta", codigo: "VAL61-26" }, { nome: "Viana", codigo: "VIA62-26" }, { nome: "Vila Pavão", codigo: "VPA63-26" }, { nome: "Vila Valério", codigo: "VVA64-26" }, { nome: "Vila Velha", codigo: "VVE65-26" }, { nome: "Vitoria" , codigo: "VIT66-26" }
     ];
 
-    // BANCO DE DADOS DE RELAÇÃO MUNICÍPIO x EDITAL
     const bancoUsuarios = [
         { edital: "001/2021", municipio: "AGUIA BRANCA" }, { edital: "001/2021", municipio: "ANCHIETA" }, { edital: "001/2021", municipio: "ARACRUZ" }, { edital: "001/2021", municipio: "BAIXO GUANDU" }, { edital: "001/2021", municipio: "BARRA DE SAO FRANCISCO" }, { edital: "001/2021", municipio: "CACHOEIRO DE ITAPEMIRIM" }, { edital: "001/2021", municipio: "CARIACICA" }, { edital: "001/2021", municipio: "COLATINA" }, { edital: "001/2021", municipio: "CONCEICAO DA BARRA" }, { edital: "001/2021", municipio: "DOMINGOS MARTINS" }, { edital: "001/2021", municipio: "ECOPORANGA" }, { edital: "001/2021", municipio: "GUACUI" }, { edital: "001/2021", municipio: "IBATIBA" }, { edital: "001/2021", municipio: "IBIRACU" }, { edital: "001/2021", municipio: "ICONHA" }, { edital: "001/2021", municipio: "ITAPEMIRIM" }, { edital: "001/2021", municipio: "ITARANA" }, { edital: "001/2021", municipio: "JAGUARE" }, { edital: "001/2021", municipio: "LARANJA DA TERRA" }, { edital: "001/2021", municipio: "LINHARES" }, { edital: "001/2021", municipio: "MARATAIZES" }, { edital: "001/2021", municipio: "MARECHAL FLORIANO" }, { edital: "001/2021", municipio: "MARILANDIA" }, { edital: "001/2021", municipio: "MONTANHA" }, { edital: "001/2021", municipio: "NOVA VENECIA" }, { edital: "001/2021", municipio: "PEDRO CANARIO" }, { edital: "001/2021", municipio: "PINHEIROS" }, { edital: "001/2021", municipio: "PIUMA" }, { edital: "001/2021", municipio: "RIO NOVO DO SUL" }, { edital: "001/2021", municipio: "SANTA LEOPOLDINA" }, { edital: "001/2021", municipio: "SANTA TERESA" }, { edital: "001/2021", municipio: "SAO DOMINGOS DO NORTE" }, { edital: "001/2021", municipio: "SAO GABRIEL DA PALHA" }, { edital: "001/2021", municipio: "SAO JOSE DO CALCADO" }, { edital: "001/2021", municipio: "SERRA" }, { edital: "001/2021", municipio: "VIANA" }, { edital: "001/2021", municipio: "VILA PAVAO" }, { edital: "001/2021", municipio: "VILA VELHA" }, { edital: "001/2021", municipio: "VITORIA" },
         { edital: "001/2022", municipio: "ALFREDO CHAVES" }, { edital: "001/2022", municipio: "ANCHIETA" }, { edital: "001/2022", municipio: "ARACRUZ" }, { edital: "001/2022", municipio: "ATILIO VIVACQUA" }, { edital: "001/2022", municipio: "BARRA DE SAO FRANCISCO" }, { edital: "001/2022", municipio: "BOA ESPERANCA" }, { edital: "001/2022", municipio: "BOM JESUS DO NORTE" }, { edital: "001/2022", municipio: "CARIACICA" }, { edital: "001/2022", municipio: "COLATINA" }, { edital: "001/2022", municipio: "CONCEICAO DA BARRA" }, { edital: "001/2022", municipio: "CONCEICAO DO CASTELO" }, { edital: "001/2022", municipio: "DOMINGOS MARTINS" }, { edital: "001/2022", municipio: "DORES DO RIO PRETO" }, { edital: "001/2022", municipio: "GUARAPARI" }, { edital: "001/2022", municipio: "IBATIBA" }, { edital: "001/2022", municipio: "IBITIRAMA" }, {edital: "001/2022" , municipio: "ITAGUACU" } , { edital: "001/2022", municipio: "ITAPEMIRIM" }, { edital: "001/2022" , municipio: "IUNA" } , { edital: "001/2022", municipio: "JAGUARE" }, { edital: "001/2022", municipio: "JOAO NEIVA" }, { edital: "001/2022", municipio: "LARANJA DA TERRA" }, { edital: "001/2022", municipio: "MANTENOPOLIS" }, { edital: "001/2022", municipio: "MARATAIZES" }, { edital: "001/2022", municipio: "MARILANDIA" }, { edital: "001/2022", municipio: "MONTANHA" }, { edital: "001/2022", municipio: "MUNIZ FREIRE" }, { edital: "001/2022", municipio: "MUQUI" }, { edital: "001/2022", municipio: "NOVA VENECIA" }, { edital: "001/2022", municipio: "PANCAS" }, { edital: "001/2022", municipio: "PINHEIROS" }, { edital: "001/2022", municipio: "PIUMA" }, { edital: "001/2022", municipio: "SAO DOMINGOS DO NORTE" }, { edital: "001/2022", municipio: "SAO JOSE DO CALCADO" }, { edital: "001/2022", municipio: "SAO MATEUS" }, { edital: "001/2022", municipio: "VARGEM ALTA" }, { edital: "001/2022", municipio: "VILA PAVAO" }, { edital: "001/2022", municipio: "VILA VELHA" }, { edital: "001/2022", municipio: "VITORIA" },
@@ -181,13 +120,10 @@
     function verificarToken() {
         const tokenDigitado = document.getElementById('codigo_acesso').value.toUpperCase().trim();
         const tokenEncontrado = tokensMunicipios.find(t => t.codigo === tokenDigitado);
-
         if (tokenEncontrado) {
             const nomeMuniNorm = tokenEncontrado.nome.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             const editaisDisponiveis = bancoUsuarios.filter(u => u.municipio === nomeMuniNorm);
-
             if (editaisDisponiveis.length === 0) return alert("Município validado, mas nenhum edital encontrado.");
-
             const select = document.getElementById('selecao_edital');
             select.innerHTML = "";
             editaisDisponiveis.forEach(e => {
@@ -196,7 +132,6 @@
                 opt.innerHTML = `Edital ${e.edital}`;
                 select.appendChild(opt);
             });
-
             document.getElementById('label_municipio').innerHTML = `Município: <b>${tokenEncontrado.nome}</b>`;
             document.getElementById('etapa_1').classList.add('hidden');
             document.getElementById('etapa_2').classList.remove('hidden');
@@ -215,20 +150,323 @@
         renderHistorico();
     }
 
-    // FUNÇÕES DE SUPORTE (MANTIDAS EXATAMENTE COMO NO ORIGINAL)
-    function mudarAba(abaId) { document.querySelectorAll('.conteudo_aba').forEach(a => a.style.display='none'); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(abaId).style.display='block'; }
+    function mudarAba(abaId) { document.querySelectorAll('.conteudo_aba').forEach(a => a.style.display='none'); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(abaId).style.display='block'; if(abaId === 'aba_envio') { document.getElementById('btn_aba_envio').classList.add('active'); } }
     function parseMoney(v) { return parseFloat(v.replace(/[R$\s.]/g,'').replace(',','.')) || 0; }
     function formatMoney(n) { return "R$ " + n.toLocaleString('pt-BR',{minimumFractionDigits:2}); }
-    function validarLogica() { const dif = (parseMoney(document.getElementById('s_anterior').value) + parseMoney(document.getElementById('s_repasses').value) + parseMoney(document.getElementById('s_rendimentos').value)) - parseMoney(document.getElementById('s_atual').value); document.getElementById('v_gastos_display').innerText = formatMoney(dif > 0.01 ? dif : 0); document.getElementById('area_despesas').style.display = (dif > 0.01) ? 'block' : 'none'; atualizarPainelControle(); }
-    function atualizarPainelControle() { const totalParaGastar = parseMoney(document.getElementById('v_gastos_display').innerText); const totalJaLancado = listaDespesas.reduce((soma, item) => soma + parseMoney(item.valor), 0); const restante = totalParaGastar - totalJaLancado; const el = document.getElementById('saldo_restante_label'); el.innerText = formatMoney(restante); el.style.color = (restante < -0.01) ? 'red' : (Math.abs(restante) < 0.01 ? 'green' : '#856404'); }
+    
+    function tratarClassificacaoEspecial() {
+        const cls = document.getElementById('f_class').value;
+        const label = document.getElementById('label_f_fornecedor');
+        const input = document.getElementById('f_fornecedor');
+        const thTabela = document.getElementById('th_fornecedor');
+
+        if (cls === "Tarifas bancárias") {
+            label.innerText = "18. Descrição da ocorrência";
+            input.placeholder = "Ex: Tarifa bancária";
+            thTabela.innerText = "Descrição/Fornecedor";
+        } else if (cls === "Pagamento indevido realizado na conta") {
+            label.innerText = "18. Descrição da ocorrência";
+            input.placeholder = "Ex: Pagamento realizado indevidamente";
+            thTabela.innerText = "Descrição/Fornecedor";
+        } else if (cls === "Estorno/devolução de pagamento indevido") {
+            label.innerText = "18. Descrição da ocorrência";
+            input.placeholder = "Ex: Devolução de valor para a conta";
+            thTabela.innerText = "Descrição/Fornecedor";
+        } else {
+            label.innerText = "18. Nome do Fornecedor";
+            input.placeholder = "";
+            thTabela.innerText = "Fornecedor";
+        }
+    }
+
+    function validarLogica() { const dif = (parseMoney(document.getElementById('s_anterior').value) + parseMoney(document.getElementById('s_repasses').value) + parseMoney(document.getElementById('s_rendimentos').value) + parseMoney(document.getElementById('s_devolvidos').value)) - parseMoney(document.getElementById('s_atual').value); document.getElementById('v_gastos_display').innerText = formatMoney(dif > 0.01 ? dif : 0); document.getElementById('area_despesas').style.display = (dif > 0.01) ? 'block' : 'none'; atualizarPainelControle(); }
+    
+    function atualizarPainelControle() { 
+        const totalParaGastar = parseMoney(document.getElementById('v_gastos_display').innerText); 
+        const totalJaLancado = listaDespesas.reduce((soma, item) => soma + parseMoney(item.valor), 0); 
+        const restante = totalParaGastar - totalJaLancado; 
+        const el = document.getElementById('saldo_restante_label'); 
+        el.innerText = formatMoney(restante); 
+        el.style.color = (restante < -0.01) ? 'red' : (Math.abs(restante) < 0.01 ? 'green' : '#856404'); 
+    }
+    
     function toggleNFVinculada() { document.getElementById('div_nf_vinc').classList.toggle('hidden', document.getElementById('f_tipo_doc').value !== "GUIA DE IMPOSTO"); }
     function atualizarNatureza() { const sel = document.getElementById('f_class'); document.getElementById('f_natureza').value = sel.options[sel.selectedIndex].parentNode.label || ""; }
-    function adicionarGasto() { const valorNovoGasto = parseMoney(document.getElementById('f_valor').value); const totalParaGastar = parseMoney(document.getElementById('v_gastos_display').innerText); const totalJaLancado = listaDespesas.reduce((soma, item) => soma + parseMoney(item.valor), 0); if ((totalJaLancado + valorNovoGasto) > (totalParaGastar + 0.01)) return alert("ERRO: Valor supera o saldo disponível!"); const item = { forn: document.getElementById('f_fornecedor').value, cnpj: document.getElementById('f_cnpj_fav').value, tipo_doc: document.getElementById('f_tipo_doc').value, nf_vinc: document.getElementById('f_nf_vinc').value, num_doc: document.getElementById('f_num_doc').value, data_doc: document.getElementById('f_data_doc').value, classificacao: document.getElementById('f_class').value, natureza: document.getElementById('f_natureza').value, ob: document.getElementById('f_ob').value, data_pgto: document.getElementById('f_data_pgto').value, valor: document.getElementById('f_valor').value }; if(!item.forn || !item.natureza || item.valor === "R$ 0,00") return alert("Preencha os campos!"); listaDespesas.push(item); renderTabela(); document.getElementById('f_fornecedor').value = ""; document.getElementById('f_cnpj_fav').value = ""; document.getElementById('f_tipo_doc').selectedIndex = 0; document.getElementById('f_num_doc').value = ""; document.getElementById('f_data_doc').value = ""; document.getElementById('f_class').selectedIndex = 0; document.getElementById('f_natureza').value = ""; document.getElementById('f_ob').value = ""; document.getElementById('f_data_pgto').value = ""; document.getElementById('f_valor').value = "R$ 0,00"; document.getElementById('div_nf_vinc').classList.add('hidden'); atualizarPainelControle(); }
-    function renderTabela() { document.querySelector('#tabela_gastos tbody').innerHTML = listaDespesas.map((d, i) => `<tr><td>${i+1}</td><td>${d.forn}</td><td>${d.natureza}</td><td>${d.valor}</td><td><button onclick="listaDespesas.splice(${i},1);renderTabela();atualizarPainelControle()">X</button></td></tr>`).join(''); }
+    
+    function adicionarGasto() { 
+        const valorNovoGasto = parseMoney(document.getElementById('f_valor').value); 
+        const totalParaGastar = parseMoney(document.getElementById('v_gastos_display').innerText); 
+        
+        const totalJaLancado = listaDespesas.reduce((soma, item, index) => {
+            if (indexEditando !== null && index === indexEditando) return soma;
+            return soma + parseMoney(item.valor);
+        }, 0); 
+        
+        if ((totalJaLancado + valorNovoGasto) > (totalParaGastar + 0.01)) return alert("ERRO: Valor supera o saldo disponível!"); 
+        
+        const item = { 
+            forn: document.getElementById('f_fornecedor').value, 
+            cnpj: document.getElementById('f_cnpj_fav').value, 
+            tipo_doc: document.getElementById('f_tipo_doc').value, 
+            nf_vinc: document.getElementById('f_nf_vinc').value, 
+            num_doc: document.getElementById('f_num_doc').value, 
+            data_doc: document.getElementById('f_data_doc').value, 
+            classificacao: document.getElementById('f_class').value, 
+            natureza: document.getElementById('f_natureza').value, 
+            ob: document.getElementById('f_ob').value, 
+            data_pgto: document.getElementById('f_data_pgto').value, 
+            valor: document.getElementById('f_valor').value 
+        }; 
+        
+        if(!item.forn || !item.natureza || item.valor === "R$ 0,00") return alert("Preencha todos os campos obrigatórios!"); 
+        
+        if (indexEditando !== null) {
+            listaDespesas[indexEditando] = item;
+            indexEditando = null;
+            const btn = document.getElementById('btn_adicionar_pagamento');
+            btn.innerText = "ADICIONAR PAGAMENTO";
+            btn.style.background = "var(--success)";
+        } else {
+            listaDespesas.push(item); 
+        }
+        
+        renderTabela(); 
+        
+        document.getElementById('f_fornecedor').value = ""; 
+        document.getElementById('f_cnpj_fav').value = ""; 
+        document.getElementById('f_tipo_doc').selectedIndex = 0; 
+        document.getElementById('f_num_doc').value = ""; 
+        document.getElementById('f_data_doc').value = ""; 
+        document.getElementById('f_class').selectedIndex = 0; 
+        document.getElementById('f_natureza').value = ""; 
+        document.getElementById('f_ob').value = ""; 
+        document.getElementById('f_data_pgto').value = ""; 
+        document.getElementById('f_valor').value = "R$ 0,00"; 
+        document.getElementById('div_nf_vinc').classList.add('hidden'); 
+        tratarClassificacaoEspecial();
+        atualizarPainelControle(); 
+    }
+    
+    function editarDespesaLocal(index) {
+        indexEditando = index;
+        const item = listaDespesas[index];
+        
+        document.getElementById('f_fornecedor').value = item.forn;
+        document.getElementById('f_cnpj_fav').value = item.cnpj;
+        document.getElementById('f_tipo_doc').value = item.tipo_doc;
+        toggleNFVinculada();
+        document.getElementById('f_nf_vinc').value = item.nf_vinc;
+        document.getElementById('f_num_doc').value = item.num_doc;
+        document.getElementById('f_data_doc').value = item.data_doc;
+        document.getElementById('f_class').value = item.classificacao;
+        document.getElementById('f_natureza').value = item.natureza;
+        document.getElementById('f_ob').value = item.ob;
+        document.getElementById('f_data_pgto').value = item.data_pgto;
+        document.getElementById('f_valor').value = item.valor;
+        
+        tratarClassificacaoEspecial();
+        
+        const btn = document.getElementById('btn_adicionar_pagamento');
+        btn.innerText = "ATUALIZAR PAGAMENTO";
+        btn.style.background = "var(--primary)";
+        
+        document.getElementById('painel_controle').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderTabela() { 
+        document.querySelector('#tabela_gastos tbody').innerHTML = listaDespesas.map((d, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td>${d.forn}</td>
+                <td>${d.natureza}</td>
+                <td>${d.valor}</td>
+                <td>
+                    <button class="btn-tbl btn-tbl-edit" onclick="editarDespesaLocal(${i})">Editar</button>
+                    <button class="btn-tbl btn-tbl-del" onclick="if(indexEditando===${i})indexEditando=null;listaDespesas.splice(${i},1);renderTabela();atualizarPainelControle();document.getElementById('btn_adicionar_pagamento').innerText='ADICIONAR PAGAMENTO';document.getElementById('btn_adicionar_pagamento').style.background='var(--success)';">X</button>
+                </td>
+            </tr>
+        `).join(''); 
+    }
+    
     function formatarMoeda(valor) { let v = parseFloat(valor.toString().replace(/[R$\s.]/g,'').replace(',','.')); return isNaN(v) ? valor : "R$ " + v.toLocaleString('pt-BR', {minimumFractionDigits: 2}); }
-    function gerarPDF() { const { jsPDF } = window.jspdf; const doc = new jsPDF('l', 'mm', 'a4'); doc.setFontSize(20); doc.setTextColor(0, 86, 179); doc.text("PROETI - ES | Relatório de Monitoramento Mensal", 148, 15, { align: 'center' }); doc.setFontSize(12); doc.setTextColor(0, 0, 0); doc.text(`Município: ${document.getElementById('m_municipio').value}`, 14, 30); doc.text(`Edital: ${document.getElementById('m_edital').value}`, 14, 37); doc.text(`Mês de Referência: ${document.getElementById('m_mes').value}`, 14, 44); doc.setFontSize(14); doc.text("Resumo Financeiro", 14, 55); doc.setFontSize(10); doc.rect(14, 58, 267, 15); doc.text(`Saldo Anterior: ${document.getElementById('s_anterior').value}`, 16, 64); doc.text(`Repasses: ${document.getElementById('s_repasses').value}`, 80, 64); doc.text(`Rendimentos: ${document.getElementById('s_rendimentos').value}`, 150, 64); doc.text(`Saldo Atual: ${document.getElementById('s_atual').value}`, 220, 64); const columns = ["Fornecedor", "CNPJ", "Tipo Doc", "NF Vinc", "Nº Doc", "Data Doc", "Natureza", "OB", "Data Pgto", "Valor"]; const data = listaDespesas.map(d => [d.forn, d.cnpj, d.tipo_doc, d.nf_vinc, d.num_doc, d.data_doc, d.natureza, d.ob, d.data_pgto, d.valor]); doc.autoTable({ startY: 78, head: [columns], body: data, theme: 'striped', headStyles: { fillColor: [0, 86, 179] }, styles: { fontSize: 8, cellPadding: 2 } }); doc.text(`Gerado em: ${new Date().toLocaleString()} - Sistema de Monitoramento PROETI ES`, 14, 200); doc.save(`Monitoramento_${document.getElementById('m_municipio').value}_${document.getElementById('m_mes').value}.pdf`); }
-    function prepararEnvio() { const mes = document.getElementById('m_mes').value; if(!mes) return alert("Selecione o mês!"); gerarPDF(); const payload = { edital: document.getElementById('m_edital').value, municipio: municipioLogado.municipio, mes: mes, totais: { anterior: document.getElementById('s_anterior').value, repasses: document.getElementById('s_repasses').value, rendimentos: document.getElementById('s_rendimentos').value, atual: document.getElementById('s_atual').value }, itens: listaDespesas }; fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }).then(() => { alert("Enviado com sucesso!"); location.reload(); }).catch(err => { console.error(err); alert("Erro ao enviar."); }); }
-    function renderHistorico() { fetch(SCRIPT_URL).then(res => res.json()).then(dados => { let meuHistorico = dados.filter(x => x.municipio === municipioLogado.municipio); let grupos = {}; meuHistorico.forEach(x => { if (!grupos[x.mes]) grupos[x.mes] = { edital: x.edital, anterior: x.anterior, repasses: x.repasses, rendimentos: x.rendimentos, atual: x.atual, itens: [] }; grupos[x.mes].itens.push(x); }); const container = document.getElementById('lista_historico'); container.innerHTML = ordemMeses.filter(mes => grupos[mes]).map((mes, i) => { let grupo = grupos[mes]; let totalDespesas = grupo.itens.reduce((soma, it) => soma + parseFloat(it.valor.toString().replace(/[R$\s.]/g,'').replace(',','.') || 0), 0); let tabelaItens = grupo.itens.map(it => `<tr style="font-size:11px;"><td>${it.forn}</td><td>${it.natureza}</td><td>${it.tipo_doc}</td><td>${it.num_doc}</td><td>${it.ob}</td><td>${formatarMoeda(it.valor)}</td></tr>`).join(''); return `<div class="item-historico"><div class="header-item" onclick="toggleDetalhes(${i})" style="background:#e9ecef; border-bottom:1px solid #ccc; display: flex; flex-wrap: wrap; gap: 10px;"><span style="width: 100%;"><b>${mes}</b> - Edital ${grupo.edital}</span><div style="font-size:10px; font-weight:normal;"><b>Saldo Ant:</b> ${formatarMoeda(grupo.anterior)} | <b>Repasses:</b> ${formatarMoeda(grupo.repasses)} | <b>Rendimentos:</b> ${formatarMoeda(grupo.rendimentos)} | <b>Saldo Atual:</b> ${formatarMoeda(grupo.atual)} | <b>Total Desp:</b> ${formatarMoeda(totalDespesas)}</div></div><div id="detalhes_${i}" class="detalhes-ocultos"><table style="width:100%; border-collapse:collapse; margin-top:5px;"><thead><tr style="background:#eee; font-size:10px;"><th>Fornecedor</th><th>Natureza</th><th>Tipo</th><th>N° Doc</th><th>OB</th><th>Valor</th></tr></thead><tbody>${tabelaItens}</tbody></table></div></div>`; }).join(''); }); }
+    
+    function gerarPDF() { 
+        const { jsPDF } = window.jspdf; 
+        const doc = new jsPDF('l', 'mm', 'a4'); 
+        doc.setFontSize(20); 
+        doc.setTextColor(0, 86, 179); 
+        doc.text("PROETI - ES | Relatório de Monitoramento Mensal", 148, 15, { align: 'center' }); 
+        doc.setFontSize(12); 
+        doc.setTextColor(0, 0, 0); 
+        doc.text(`Município: ${document.getElementById('m_municipio').value}`, 14, 30); 
+        doc.text(`Edital: ${document.getElementById('m_edital').value}`, 14, 37); 
+        doc.text(`Mês de Referência: ${document.getElementById('m_mes').value}`, 14, 44); 
+        doc.setFontSize(14); 
+        doc.text("Resumo Financeiro", 14, 55); 
+        doc.setFontSize(10); 
+        doc.rect(14, 58, 267, 15); 
+        doc.text(`Saldo Anterior: ${document.getElementById('s_anterior').value}`, 16, 64); 
+        doc.text(`Repasses: ${document.getElementById('s_repasses').value}`, 68, 64); 
+        doc.text(`Rendimentos: ${document.getElementById('s_rendimentos').value}`, 122, 64); 
+        doc.text(`Devolvidos: ${document.getElementById('s_devolvidos').value}`, 180, 64); 
+        doc.text(`Saldo Atual: ${document.getElementById('s_atual').value}`, 232, 64); 
+        const columns = ["Fornecedor / Descrição", "CNPJ", "Tipo Doc", "NF Vinc", "Nº Doc", "Data Doc", "Natureza", "OB", "Data Pgto", "Valor"]; 
+        const data = listaDespesas.map(d => [d.forn, d.cnpj, d.tipo_doc, d.nf_vinc, d.num_doc, d.data_doc, d.natureza, d.ob, d.data_pgto, d.valor]); 
+        doc.autoTable({ startY: 78, head: [columns], body: data, theme: 'striped', headStyles: { fillColor: [0, 86, 179] }, styles: { fontSize: 8, cellPadding: 2 } }); 
+        doc.text(`Gerado em: ${new Date().toLocaleString()} - Sistema de Monitoramento PROETI ES`, 14, 200); 
+        doc.save(`Monitoramento_${document.getElementById('m_municipio').value}_${document.getElementById('m_mes').value}.pdf`); 
+    }
+    
+    function prepararEnvio() { 
+        const mes = document.getElementById('m_mes').value; 
+        if(!mes) return alert("Selecione o mês!"); 
+        const difCalculada = (parseMoney(document.getElementById('s_anterior').value) + parseMoney(document.getElementById('s_repasses').value) + parseMoney(document.getElementById('s_rendimentos').value) + parseMoney(document.getElementById('s_devolvidos').value)) - parseMoney(document.getElementById('s_atual').value);
+        if (difCalculada > 0.01) {
+            if (listaDespesas.length === 0) return alert("ERRO: Existe uma diferença financeira positiva a ser justificada. Você deve lançar pelo menos 1 despesa.");
+            const totalJaLancado = listaDespesas.reduce((soma, item) => soma + parseMoney(item.valor), 0);
+            if (Math.abs(totalJaLancado - difCalculada) > 0.01) return alert("ERRO: A soma das despesas (" + formatMoney(totalJaLancado) + ") deve ser exatamente igual ao valor calculado da diferença (" + formatMoney(difCalculada) + ").");
+        }
+        gerarPDF(); 
+        const payload = { 
+            acao: modoEdicao ? "editar" : "novo", 
+            mesOriginal: mesEdicaoOriginal, 
+            edital: document.getElementById('m_edital').value, 
+            municipio: municipioLogado.municipio, 
+            mes: mes, 
+            totais: { anterior: document.getElementById('s_anterior').value, repasses: document.getElementById('s_repasses').value, rendimentos: document.getElementById('s_rendimentos').value, devolvidos: document.getElementById('s_devolvidos').value, presidential: "0", atual: document.getElementById('s_atual').value }, 
+            items: listaDespesas 
+        }; 
+        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }).then(() => { 
+            alert("Enviado com sucesso!"); 
+            location.reload(); 
+        }).catch(err => { 
+            console.error(err); 
+            alert("Erro ao enviar."); 
+        }); 
+    }
+
+    function carregarParaEdicao(mesGrupo, grupoStr) {
+        const grupo = JSON.parse(decodeURIComponent(grupoStr));
+        modoEdicao = true;
+        mesEdicaoOriginal = mesGrupo;
+        document.getElementById('m_mes').value = mesGrupo;
+        document.getElementById('s_anterior').value = formatarMoeda(grupo.anterior);
+        document.getElementById('s_repasses').value = formatarMoeda(grupo.repasses);
+        document.getElementById('s_rendimentos').value = formatarMoeda(grupo.rendimentos);
+        document.getElementById('s_devolvidos').value = formatarMoeda(grupo.devolvidos || "0");
+        document.getElementById('s_atual').value = formatarMoeda(grupo.atual);
+        
+        listaDespesas = grupo.itens.map(it => ({ 
+            forn: it.forn, 
+            cnpj: it.cnpj, 
+            tipo_doc: it.tipo_doc, 
+            nf_vinc: it.nf_vinc, 
+            num_doc: it.num_doc, 
+            data_doc: it.data_doc, 
+            classificacao: it.classificacao, 
+            natureza: it.natureza, 
+            ob: it.ob, 
+            data_pgto: it.data_pgto, 
+            valor: formatarMoeda(it.valor) 
+        }));
+        
+        validarLogica();
+        renderTabela();
+        tratarClassificacaoEspecial();
+        indexEditando = null;
+        document.getElementById('btn_adicionar_pagamento').innerText = "ADICIONAR PAGAMENTO";
+        document.getElementById('btn_adicionar_pagamento').style.background = "var(--success)";
+        mudarAba('aba_envio');
+    }
+
+    function renderHistorico() { 
+        fetch(SCRIPT_URL).then(res => res.json()).then(dados => { 
+            let meuHistorico = dados.filter(x => x.municipio === municipioLogado.municipio); 
+            let grupos = {}; 
+            
+            meuHistorico.forEach(x => { 
+                if (!grupos[x.mes]) {
+                    grupos[x.mes] = { 
+                        edital: x.edital, 
+                        anterior: x.anterior, 
+                        repasses: x.repasses, 
+                        rendimentos: x.rendimentos, 
+                        devolvidos: x.devolvidos || "0", 
+                        atual: x.atual, 
+                        itens: [] 
+                    }; 
+                }
+                
+                grupos[x.mes].itens.push({
+                    forn: x.forn,                   
+                    cnpj: x.cnpj,                   
+                    tipo_doc: x.tipo_doc,           
+                    nf_vinc: x.nf_vinc,             
+                    num_doc: x.num_doc,             
+                    data_doc: x.data_doc,           
+                    classificacao: x.classificacao, 
+                    natureza: x.natureza,           
+                    ob: x.ob,                       
+                    data_pgto: x.data_pgto,         
+                    valor: x.valor                  
+                }); 
+            }); 
+            
+            const container = document.getElementById('lista_historico'); 
+            container.innerHTML = ordemMeses.filter(mes => grupos[mes]).map((mes, i) => { 
+                let grupo = grupos[mes]; 
+                let totalDespesas = grupo.itens.reduce((soma, it) => soma + parseFloat(it.valor.toString().replace(/[R$\s.]/g,'').replace(',','.') || 0), 0); 
+                
+                let tabelaItens = grupo.itens.map(it => `
+                    <tr style="font-size:11px;">
+                        <td>${it.forn || ''}</td>
+                        <td>${it.natureza || ''}</td>
+                        <td>${it.tipo_doc || ''}</td>
+                        <td>${it.num_doc || ''}</td>
+                        <td>${it.ob || ''}</td>
+                        <td>${formatarMoeda(it.valor)}</td>
+                    </tr>
+                `).join(''); 
+                
+                let grupoStr = encodeURIComponent(JSON.stringify(grupo));
+                return `
+                    <div class="item-historico">
+                        <div class="header-item" onclick="toggleDetalhes(${i})" style="background:#e9ecef; border-bottom:1px solid #ccc; display: flex; flex-wrap: wrap; gap: 10px;">
+                            <span style="width: 100%;"><b>${mes}</b> - Edital ${grupo.edital}</span>
+                            <div style="font-size:10px; font-weight:normal;">
+                                <b>Saldo Ant:</b> ${formatarMoeda(grupo.anterior)} | 
+                                <b>Repasses:</b> ${formatarMoeda(grupo.repasses)} | 
+                                <b>Rendimentos:</b> ${formatarMoeda(grupo.rendimentos)} | 
+                                <b>Devolvidos:</b> ${formatarMoeda(grupo.devolvidos)} | 
+                                <b>Saldo Atual:</b> ${formatarMoeda(grupo.atual)} | 
+                                <b>Total Desp:</b> ${formatarMoeda(totalDespesas)}
+                            </div>
+                        </div>
+                        <div id="detalhes_${i}" class="detalhes-ocultos">
+                            <div style="padding: 10px; text-align: right;">
+                                <button class="tab-btn" style="background:var(--primary); color:white; padding: 5px 15px;" onclick="carregarParaEdicao('${mes}', '${grupoStr}')">Editar</button>
+                            </div>
+                            <table style="width:100%; border-collapse:collapse; margin-top:5px;">
+                                <thead>
+                                    <tr style="background:#eee; font-size:10px;">
+                                        <th>Fornecedor / Descrição</th>
+                                        <th>Natureza</th>
+                                        <th>Tipo</th>
+                                        <th>N° Doc</th>
+                                        <th>OB</th>
+                                        <th>Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tabelaItens}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`; 
+            }).join(''); 
+        }); 
+    }
+    
     function toggleDetalhes(id) { const el = document.getElementById('detalhes_' + id); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
     document.getElementById('f_cnpj_fav').addEventListener('input', function (e) { let v = e.target.value.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2"); e.target.value = v.substring(0, 18); });
     document.querySelectorAll('.moeda').forEach(input => { input.addEventListener('input', e => { let v = e.target.value.replace(/\D/g,''); v = (v/100).toFixed(2).replace(".",",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); e.target.value = "R$ " + v; validarLogica(); atualizarPainelControle(); }); });
